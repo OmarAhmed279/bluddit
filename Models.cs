@@ -15,7 +15,7 @@ public class User
     public DateTime CreationDate { get; set; } = DateTime.UtcNow;
 }
 
-public class Post 
+public class Post
 {
     [BsonId]
     [BsonRepresentation(BsonType.ObjectId)]
@@ -26,8 +26,8 @@ public class Post
     public string CommunityId { get; set; } = string.Empty;
     public string Title { get; set; } = string.Empty;
     public string Content { get; set; } = string.Empty;
-    public int Likes { get; set; } = 0;
-    public int Dislikes { get; set; } = 0;
+    public int Upvotes { get; set; } = 0;
+    public int Downvotes { get; set; } = 0;
     public DateTime CreationDate { get; set; } = DateTime.UtcNow;
 }
 
@@ -43,8 +43,8 @@ public class Comment
     [BsonRepresentation(BsonType.ObjectId)]
     public String? ParentId { get; set; }
     public string Content { get; set; } = string.Empty;
-    public int Likes { get; set; } = 0;
-    public int Dislikes { get; set; } = 0;
+    public int Upvotes { get; set; } = 0;
+    public int Downvotes { get; set; } = 0;
     public DateTime CreationDate { get; set; } = DateTime.UtcNow;
 }
 
@@ -55,10 +55,10 @@ public class Community
     public string? Id { get; set; }
     [BsonRepresentation(BsonType.ObjectId)]
     public string OwnerId { get; set; } = string.Empty;
-    public string Name { get; set; } = string.Empty;
-    public string? Description { get; set; }
     [BsonRepresentation(BsonType.ObjectId)]
     public List<String> ModeratorIds { get; set; } = [];
+    public string Name { get; set; } = string.Empty;
+    public string? Description { get; set; }
     public DateTime CreationDate { get; set; } = DateTime.UtcNow;
 }
 

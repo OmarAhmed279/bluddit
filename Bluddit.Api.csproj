@@ -7,9 +7,16 @@
     </PropertyGroup>
 
     <ItemGroup>
+        <PackageReference Include="DotNetEnv" Version="3.2.0" />
         <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="11.0.0"/>
         <PackageReference Include="MongoDB.Driver" Version="3.14.1" />
         <PackageReference Include="Scalar.AspNetCore" Version="3.2.0" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <None Update="atlas-credentials.env">
+        <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      </None>
     </ItemGroup>
 
 </Project>
