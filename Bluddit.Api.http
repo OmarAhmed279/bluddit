@@ -1,0 +1,11 @@
+@Bluddit.Api_HostAddress = http://localhost:5122
+
+GET {{Bluddit.Api_HostAddress}}/openapi/v1.json
+Accept: application/json
+
+###
+
+GET {{Bluddit.Api_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
