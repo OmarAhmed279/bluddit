@@ -1,4 +1,5 @@
 using System.Text;
+using Bluddit.Api.Auth;
 using Bluddit.Api.Models;
 using Bluddit.Api.Requests;
 using DotNetEnv;
@@ -12,12 +13,12 @@ var builder = WebApplication.CreateBuilder(args);
 
 Env.Load();
 
-var dbUser = Environment.GetEnvironmentVariable("MONGODB_USERNAME");
-var dbPassword = Environment.GetEnvironmentVariable("MONGODB_PASSWORD");
-var dbClusterUrl = Environment.GetEnvironmentVariable("MONGODB_URI");
+var dbUser = Environment.GetEnvironmentVariable("MONGODB_USERNAME") ?? throw new InvalidOperationException("MONGODB_USERNAME is missing.");
+var dbPassword = Environment.GetEnvironmentVariable("MONGODB_PASSWORD") ?? throw new InvalidOperationException("MONGODB_PASSWORD is missing.");
+var dbClusterUrl = Environment.GetEnvironmentVariable("MONGODB_URI") ?? throw new InvalidOperationException("MONGODB_URI is missing.");
 var databaseName = "BludditDb";
 
-var jwt = Environment.GetEnvironmentVariable("JWT_SECRET");
+var jwt = Environment.GetEnvironmentVariable("JWT_SECRET") ?? throw new InvalidOperationException("JWT_SECRET is missing.");
 
 var connectionString = $"mongodb+srv://{dbUser}:{dbPassword}@{dbClusterUrl}/{databaseName}";
 
@@ -38,12 +39,15 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
         {
             ValidateIssuer = false,
             ValidateAudience = false,
+            ValidateLifetime = true,
             ValidateIssuerSigningKey = true,
             IssuerSigningKey = new SymmetricSecurityKey(
                 Encoding.UTF8.GetBytes(jwt!))
         };
     });
-//should we add authorization? or do it manually?
+
+builder.Services.AddAuthorizationBuilder()
+    .AddPolicy("AdminOnly", policy => policy.RequireRole("admin"));
 
 builder.Services.AddAuthorization();
 
@@ -51,6 +55,7 @@ builder.Services.AddOpenApi();
 
 var app = builder.Build();
 
+app.UseHttpsRedirection();
 app.UseAuthentication();
 app.UseAuthorization();
 
@@ -61,9 +66,7 @@ if (app.Environment.IsDevelopment())
     app.MapScalarApiReference(); 
 }
 
-app.UseHttpsRedirection();
-
-//TODO: finish the remaining endpoints
+//TODO: finish the remaining endpoints, and move them to /Endpoints
 app.MapGet("/users", (string? sortBy, string? order) => {});
 app.MapGet("/users/{userid}", () => {});
 app.MapGet("/posts", (string? sortBy, string? order) => {});
@@ -74,13 +77,39 @@ app.MapGet("/communities", (string? sortBy, string? order) => {});
 app.MapGet("/community/{communityid}", () => {});
 app.MapGet("/votes", (string? sortBy, string? order) => {});
 app.MapGet("/vote/{voteid}", () => {});
-app.MapPost("/users", () => {});
+
+app.MapPost("/users", async (RegisterRequest request, IMongoCollection<User> users) =>
+{
+    var exists = await users.Find(x => x.Username == request.Username).AnyAsync();
+    if (exists)
+    {
+        return Results.Conflict(new { message = "Username already exists." });
+    }
+    
+    var user = new User
+    {
+        Username = request.Username,
+        PasswordHash = BCrypt.Net.BCrypt.HashPassword(request.Password)
+    };
+    
+    await users.InsertOneAsync(user);
+    
+    return Results.Created($"/users/{user.Id}", new { user.Id, user.Username });
+});
+
 app.MapPost("/auth/login", async (LoginRequest request, IMongoCollection<User> users) =>
 {
     var user = await users.Find(x => x.Username == request.Username).FirstOrDefaultAsync();
+
+    if (user == null || !BCrypt.Net.BCrypt.Verify(request.Password, user.PasswordHash))
+    {
+        return Results.Unauthorized();
+    }
     
-    //TODO: finish login
+    return Results.Ok(new { token = TokenService.CreateToken(user, jwt) });
+
 }); 
+
 app.MapPost("/posts", () => {});
 app.MapPost("/comments", () => {});
 app.MapPost("/communities", () => {});
@@ -89,16 +118,9 @@ app.MapPut("/users/{userid}", () => {});
 app.MapPut("/posts/{postid}", () => {});
 app.MapPut("/comments/{commentid}", () => {});
 app.MapPut("/communities/{communityid}", () => {});
-app.MapPut("/votes/{voteid}", async (string voteid, UpdateVoteRequest request, IMongoCollection<Vote> votes) =>
-{
-    if (!ObjectId.TryParse(voteid, out _))
-    {
-        return Results.BadRequest(new { message = "Invalid ID format."});
-    }
+app.MapPut("/votes/{voteid}", async (string voteid, UpdateVoteRequest requests, IMongoCollection<Vote> votes) => {});
 
-    //TODO: finish UpdateVote
-    return null;
-});
+//TODO: actually use authorization to check if client is allowed to delete
 app.MapDelete("/users/{userid}", async (string userid, IMongoCollection<Post> users) =>
 {
     if (!ObjectId.TryParse(userid, out _))
