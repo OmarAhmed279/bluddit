@@ -12,3 +12,6 @@ public record CreatePostRequest
     [StringLength(40000)]
     public required string Body {get; init; }
 }
+
+public record DeletePostRequest();
+public record UpdatePostRequest();
