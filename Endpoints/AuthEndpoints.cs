@@ -12,6 +12,7 @@ public static class AuthEndpoints
     public static void MapAuthEndpoints(this IEndpointRouteBuilder app)
     {
         app.MapPost("/users", Register);
+        app.MapPost("auth/login", Login);
     }
 
     private static async Task<IResult> Register(RegisterRequest request, IMongoCollection<User> users)

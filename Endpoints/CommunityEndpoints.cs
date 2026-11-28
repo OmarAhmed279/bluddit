@@ -23,14 +23,43 @@ public static class CommunityEndpoints
         group.MapDelete("/{id}", DeleteCommunity).RequireAuthorization();
     }
 
-    private static async Task<IResult> GetAll(string? sortBy, string? order, IMongoCollection<Community> communities)
+    private static async Task<IResult> GetAll(string? sortBy, int? order, int? num, IMongoCollection<Community> communities)
     {
-        return null;
+        var result = communities.Find(x => true);
+        if (sortBy == "name")
+        {
+            switch (order)
+            {
+                case 1:
+                    result = result.SortBy(x => x.Name);
+                    break;
+                case -1:
+                    result = result.SortByDescending(x => x.Name);
+                    break;
+                default:
+                    return Results.BadRequest(new { message = "Invalid order format." });
+            }
+            
+        }
+        else if (sortBy != null)
+        {
+            return Results.BadRequest(new {message = "Bad SortBy format."});
+        }
+
+        var output = await result.Limit(num).ToListAsync();
+        return Results.Ok(output);
     }
 
     private static async Task<IResult> GetById(string id, IMongoCollection<Community> communities)
     {
-        return null;
+        if (!ObjectId.TryParse(id, out _))
+        {
+            return Results.BadRequest(new { message = "Invalid ID format."});
+        }
+        
+        var result = await communities.Find(x => x.Id == id).FirstOrDefaultAsync();
+        return result != null
+            ? Results.Ok(new { message = "Community found.", result }) : Results.NotFound(new { message = "Community not found." });
     }
 
     private static async Task<IResult> CreateCommunity(CreateCommunityRequest request, IMongoCollection<Community> communities, IOptions<JwtOptions> options)

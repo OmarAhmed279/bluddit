@@ -1,12 +1,10 @@
 using System.Text;
 using Bluddit.Api.Configurations;
 using Bluddit.Api.Models;
-using Bluddit.Api.Requests;
 using Bluddit.Api.Endpoints;
 using DotNetEnv;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
-using MongoDB.Bson;
 using MongoDB.Driver;
 using Scalar.AspNetCore;
 

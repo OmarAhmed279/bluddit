@@ -14,8 +14,7 @@ public static class VoteEndpoints
         var group = app.MapGroup("/votes");
         
         //public
-        group.MapGet("/", GetAll);
-        group.MapGet("/{id}", GetById);
+        //group.MapGet("/{id}", GetById); is this needed?
         
         //private
         group.MapPost("/", CreateVote).RequireAuthorization();
@@ -23,16 +22,28 @@ public static class VoteEndpoints
         group.MapDelete("/{id}", DeleteVote).RequireAuthorization();
     }
 
-    private static async Task<IResult> GetAll(string? sortBy, string? order, IMongoCollection<Vote> votes)
+    /*private static async Task<IResult> GetById(string id, IMongoCollection<Vote> votes)
+    {
+        if (!ObjectId.TryParse(id, out _))
+        {
+            return Results.BadRequest(new { message = "Invalid ID format."});
+        }
+        
+        var result = await votes.Find(x => x.Id == id).FirstOrDefaultAsync();
+        return result != null
+            ? Results.Ok(new { message = "Vote found.", result }) : Results.NotFound(new { message = "Vote not found." });
+    }*/
+
+    private static async Task<IResult> GetByUserId(IMongoCollection<Vote> votes)
     {
         return null;
     }
 
-    private static async Task<IResult> GetById(string id, IMongoCollection<Vote> votes)
+    private static async Task<IResult> GetByPostId(IMongoCollection<Vote> votes)
     {
         return null;
     }
-
+    
     private static async Task<IResult> CreateVote(CreateVoteRequest request, IMongoCollection<Vote> votes, IOptions<JwtOptions> options)
     {
         return null;
